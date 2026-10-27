@@ -31,15 +31,7 @@ class MyProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: AppSpacing.screen,
         children: [
-          Center(
-            child: CircleAvatar(
-              radius: 36,
-              child: Text(
-                student.initials,
-                style: const TextStyle(fontSize: 24),
-              ),
-            ),
-          ),
+          Center(child: Avatar3D(initials: student.initials, size: 80)),
           const SizedBox(height: AppSpacing.md),
           SectionCard(
             child: Column(

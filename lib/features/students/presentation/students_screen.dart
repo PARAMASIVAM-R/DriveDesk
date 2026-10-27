@@ -81,7 +81,7 @@ class StudentsScreen extends ConsumerWidget {
                       itemBuilder: (context, i) {
                         final s = list[i];
                         return ListTile(
-                          leading: CircleAvatar(child: Text(s.initials)),
+                          leading: Avatar3D(initials: s.initials),
                           title: Text(s.fullName),
                           subtitle: Text(s.phone),
                           trailing: StatusChip(

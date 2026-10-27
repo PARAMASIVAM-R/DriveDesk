@@ -33,9 +33,10 @@ class LessonTile extends ConsumerWidget {
         : formatTimeRange(lesson.start, lesson.end);
     return ListTile(
       onTap: onTap,
-      leading: CircleAvatar(
-        backgroundColor: lesson.status.color.withValues(alpha: 0.12),
-        child: Icon(Icons.directions_car_outlined, color: lesson.status.color),
+      leading: GlossyIcon(
+        Icons.directions_car_rounded,
+        color: lesson.status.color,
+        size: 40,
       ),
       title: Text(title),
       subtitle: Text('$when\n$instructor · $vehicle'),

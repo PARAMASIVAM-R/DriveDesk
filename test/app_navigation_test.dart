@@ -39,6 +39,11 @@ void main() {
     for (final l in ['Dashboard', 'Students', 'Classes', 'Fees', 'More']) {
       expect(navLabel(l), findsOneWidget);
     }
+    await tester.scrollUntilVisible(
+      find.textContaining('Needs attention'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.textContaining('Needs attention'), findsOneWidget);
 
     await tester.tap(navLabel('Students'));

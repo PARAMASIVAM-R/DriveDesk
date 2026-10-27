@@ -26,7 +26,9 @@ class StaffMoreScreen extends ConsumerWidget {
       body: ListView(
         children: [
           ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.person)),
+            leading: Avatar3D(
+              initials: (session?.displayName ?? '?').characters.first,
+            ),
             title: Text(session?.displayName ?? ''),
             subtitle: Text('${session?.role.label ?? ''} · demo account'),
           ),

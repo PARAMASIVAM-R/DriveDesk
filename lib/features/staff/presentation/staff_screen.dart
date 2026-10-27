@@ -36,7 +36,7 @@ class StaffScreen extends ConsumerWidget {
                 children: [
                   for (final m in members)
                     ListTile(
-                      leading: CircleAvatar(child: Text(m.name[0])),
+                      leading: Avatar3D(initials: m.name[0]),
                       title: Text(m.name),
                       subtitle: Text(m.phone),
                       trailing: Chip(label: Text(m.role.label)),

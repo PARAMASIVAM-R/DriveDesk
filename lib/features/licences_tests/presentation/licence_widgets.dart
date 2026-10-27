@@ -96,16 +96,14 @@ class TestAttemptTile extends StatelessWidget {
       if (test.notes.isNotEmpty) test.notes,
     ].join('\n');
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: test.status.color.withValues(alpha: 0.12),
-        child: Text(
-          '#${test.attempt}',
-          style: TextStyle(color: test.status.color),
-        ),
+      leading: GlossyIcon(
+        Icons.fact_check_rounded,
+        color: test.status.color,
+        size: 40,
       ),
       title: Row(
         children: [
-          const Expanded(child: Text('Driving test')),
+          Expanded(child: Text('Driving test · attempt #${test.attempt}')),
           StatusChip(label: test.status.label, color: test.status.color),
         ],
       ),

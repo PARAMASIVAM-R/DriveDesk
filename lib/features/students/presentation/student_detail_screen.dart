@@ -61,7 +61,7 @@ class StudentDetailScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(radius: 28, child: Text(student.initials)),
+                    Avatar3D(initials: student.initials, size: 56),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(

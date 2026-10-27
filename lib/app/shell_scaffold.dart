@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'theme/app_theme.dart';
+
 class ShellDestination {
   const ShellDestination(this.label, this.icon, this.selectedIcon);
 
@@ -39,20 +41,50 @@ class ShellScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final radius = BorderRadius.circular(AppRadius.xl);
     return Scaffold(
       body: shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: (i) =>
-            shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        destinations: [
-          for (final d in destinations)
-            NavigationDestination(
-              icon: Icon(d.icon),
-              selectedIcon: Icon(d.selectedIcon),
-              label: d.label,
+      // Floating, raised navigation dock.
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          0,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: theme.colorScheme.surfaceContainerLowest,
+            border: Border.all(
+              color: dark ? Colors.white.withValues(alpha: 0.07) : Colors.white,
+              width: 1.2,
             ),
-        ],
+            boxShadow: AppShadows.raised(AppColors.brandDeep, dark: dark),
+          ),
+          child: ClipRRect(
+            borderRadius: radius,
+            child: MediaQuery.removePadding(
+              context: context,
+              removeBottom: true,
+              child: NavigationBar(
+                selectedIndex: shell.currentIndex,
+                onDestinationSelected: (i) =>
+                    shell.goBranch(i, initialLocation: i == shell.currentIndex),
+                destinations: [
+                  for (final d in destinations)
+                    NavigationDestination(
+                      icon: Icon(d.icon),
+                      selectedIcon: Icon(d.selectedIcon),
+                      label: d.label,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

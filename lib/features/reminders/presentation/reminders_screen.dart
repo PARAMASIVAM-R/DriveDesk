@@ -117,10 +117,7 @@ class ReminderCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ListTile(
         onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: r.urgency.color.withValues(alpha: 0.12),
-          child: Icon(r.type.icon, color: r.urgency.color),
-        ),
+        leading: GlossyIcon(r.type.icon, color: r.urgency.color, size: 40),
         title: Text(r.title),
         subtitle: Text(
           [
