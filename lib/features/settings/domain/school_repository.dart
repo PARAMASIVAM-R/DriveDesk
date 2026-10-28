@@ -6,4 +6,6 @@ abstract interface class SchoolRepository {
   Future<School> saveSchool(School school);
   Future<List<StaffMember>> fetchStaff();
   Future<List<Vehicle>> fetchVehicles();
+  Future<StaffMember> saveStaff(StaffMember member);
+  Future<Vehicle> saveVehicle(Vehicle vehicle);
 }

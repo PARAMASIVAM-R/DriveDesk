@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/common_widgets.dart';
+import '../../auth/domain/session.dart';
 import '../../auth/presentation/session_provider.dart';
 import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/reminder_providers.dart';
 import '../../scheduling/presentation/lesson_providers.dart';
+import 'demo_data_providers.dart';
 
 class StaffMoreScreen extends ConsumerWidget {
   const StaffMoreScreen({super.key});
@@ -15,6 +17,7 @@ class StaffMoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
+    final isOwner = Permissions.canManageStaff(ref.watch(currentRoleProvider));
     final draftReminders = ref
         .watch(remindersProvider)
         .where((r) => r.status != ReminderStatus.markedSent)
@@ -24,88 +27,100 @@ class StaffMoreScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('More')),
       body: ListView(
+        padding: AppSpacing.screen,
         children: [
-          ListTile(
-            leading: Avatar3D(
-              initials: (session?.displayName ?? '?').characters.first,
+          Surface3D(
+            child: Row(
+              children: [
+                Avatar3D(
+                  initials: (session?.displayName ?? '?').characters.first,
+                  size: 52,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        session?.displayName ?? '',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        '${session?.role.label ?? ''} · demo account',
+                        style: const TextStyle(color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            title: Text(session?.displayName ?? ''),
-            subtitle: Text('${session?.role.label ?? ''} · demo account'),
           ),
-          const Divider(),
-          _Item(
-            icon: Icons.badge_outlined,
+          const SectionHeader('Manage'),
+          MenuTile(
+            icon: Icons.badge_rounded,
             title: 'Licences & tests',
             onTap: () => context.push('/licences'),
           ),
-          _Item(
-            icon: Icons.notifications_outlined,
+          MenuTile(
+            icon: Icons.notifications_rounded,
             title: 'Reminders',
             badge: draftReminders,
             onTap: () => context.push('/reminders'),
           ),
-          _Item(
-            icon: Icons.swap_horiz,
+          MenuTile(
+            icon: Icons.swap_horiz_rounded,
             title: 'Reschedule requests',
             badge: pending,
             onTap: () => context.push('/lessons/requests'),
           ),
-          _Item(
-            icon: Icons.groups_outlined,
-            title: 'Staff & roles',
+          MenuTile(
+            icon: Icons.groups_rounded,
+            title: 'Staff & vehicles',
             onTap: () => context.push('/team'),
           ),
-          _Item(
-            icon: Icons.store_outlined,
+          MenuTile(
+            icon: Icons.store_rounded,
             title: 'School settings',
             onTap: () => context.push('/settings'),
           ),
-          const Divider(),
-          _Item(
-            icon: Icons.logout,
+          const SectionHeader('Account'),
+          if (isOwner)
+            MenuTile(
+              icon: Icons.restart_alt_rounded,
+              title: 'Reset demo data',
+              color: AppColors.danger,
+              onTap: () => _reset(context, ref),
+            ),
+          MenuTile(
+            icon: Icons.logout_rounded,
             title: 'Sign out',
             onTap: () => ref.read(sessionProvider.notifier).signOut(),
           ),
-          const Padding(
-            padding: AppSpacing.screen,
-            child: DemoBanner(
-              text:
-                  'Frontend demo: data lives in memory and resets when the '
-                  'app restarts. No backend or real accounts.',
-            ),
+          const SizedBox(height: AppSpacing.md),
+          const DemoBanner(
+            text:
+                'Data is saved on this device only. There is no backend '
+                'or real account; records are fictional sample data.',
           ),
+          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );
   }
-}
 
-class _Item extends StatelessWidget {
-  const _Item({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.badge = 0,
-  });
-
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final int badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (badge > 0) Badge(label: Text('$badge')),
-          const Icon(Icons.chevron_right),
-        ],
-      ),
-      onTap: onTap,
+  Future<void> _reset(BuildContext context, WidgetRef ref) async {
+    final ok = await confirm(
+      context,
+      title: 'Reset demo data?',
+      message:
+          'All students, classes, payments and other changes saved on this '
+          'device will be replaced with fresh sample data. This cannot be '
+          'undone.',
+      confirmLabel: 'Reset',
     );
+    if (!ok) return;
+    await ref.read(resetDemoDataProvider)();
+    if (context.mounted) showMessage(context, 'Demo data restored');
   }
 }

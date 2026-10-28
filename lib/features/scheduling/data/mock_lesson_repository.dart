@@ -6,7 +6,7 @@ import '../domain/lesson.dart';
 import '../domain/lesson_repository.dart';
 
 final lessonRepositoryProvider = Provider<LessonRepository>(
-  (ref) => MockLessonRepository(ref.watch(mockDatabaseProvider)),
+  (ref) => MockLessonRepository(watchPersistedDatabase(ref)),
 );
 
 class MockLessonRepository implements LessonRepository {
@@ -22,6 +22,7 @@ class MockLessonRepository implements LessonRepository {
     for (final l in lessons) {
       _db.lessons[l.id] = l;
     }
+    _db.markDirty();
   }
 
   @override
@@ -29,6 +30,9 @@ class MockLessonRepository implements LessonRepository {
       _db.rescheduleRequests.values.toList();
 
   @override
-  Future<RescheduleRequest> saveRequest(RescheduleRequest request) async =>
-      _db.rescheduleRequests[request.id] = request;
+  Future<RescheduleRequest> saveRequest(RescheduleRequest request) async {
+    _db.rescheduleRequests[request.id] = request;
+    _db.markDirty();
+    return request;
+  }
 }

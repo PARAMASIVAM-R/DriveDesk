@@ -38,6 +38,28 @@ class Payment {
 
   bool get isVoided => voidReason != null;
 
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'studentId': studentId,
+    'amount': amount,
+    'date': date.toIso8601String(),
+    'method': method.name,
+    'reference': reference,
+    'voidReason': voidReason,
+  };
+
+  factory Payment.fromJson(Map<String, Object?> json) => Payment(
+    id: json['id'] as String,
+    schoolId: json['schoolId'] as String,
+    studentId: json['studentId'] as String,
+    amount: (json['amount'] as num).toDouble(),
+    date: DateTime.parse(json['date'] as String),
+    method: PaymentMethod.values.byName(json['method'] as String),
+    reference: json['reference'] as String?,
+    voidReason: json['voidReason'] as String?,
+  );
+
   Payment voided(String reason) => Payment(
     id: id,
     schoolId: schoolId,
@@ -65,6 +87,22 @@ class Installment {
   final String studentId;
   final double amountDue;
   final DateTime dueDate;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'studentId': studentId,
+    'amountDue': amountDue,
+    'dueDate': dueDate.toIso8601String(),
+  };
+
+  factory Installment.fromJson(Map<String, Object?> json) => Installment(
+    id: json['id'] as String,
+    schoolId: json['schoolId'] as String,
+    studentId: json['studentId'] as String,
+    amountDue: (json['amountDue'] as num).toDouble(),
+    dueDate: DateTime.parse(json['dueDate'] as String),
+  );
 }
 
 enum InstallmentStatus {

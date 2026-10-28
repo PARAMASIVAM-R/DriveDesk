@@ -20,40 +20,55 @@ class StudentMoreScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('More')),
       body: ListView(
+        padding: AppSpacing.screen,
         children: [
-          ListTile(
-            leading: Avatar3D(
-              initials: (session?.displayName ?? '?').characters.first,
-            ),
-            title: Text(session?.displayName ?? ''),
-            subtitle: const Text('Student · demo account'),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.notifications_outlined),
-            title: const Text('My reminders'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+          Surface3D(
+            child: Row(
               children: [
-                if (reminderCount > 0) Badge(label: Text('$reminderCount')),
-                const Icon(Icons.chevron_right),
+                Avatar3D(
+                  initials: (session?.displayName ?? '?').characters.first,
+                  size: 52,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        session?.displayName ?? '',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const Text(
+                        'Student · demo account',
+                        style: TextStyle(color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
+          ),
+          const SectionHeader('My account'),
+          MenuTile(
+            icon: Icons.notifications_rounded,
+            title: 'My reminders',
+            badge: reminderCount,
             onTap: () => context.push('/me/reminders'),
           ),
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('My profile'),
-            trailing: const Icon(Icons.chevron_right),
+          MenuTile(
+            icon: Icons.person_rounded,
+            title: 'My profile',
             onTap: () => context.push('/me/profile'),
           ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Sign out'),
+          MenuTile(
+            icon: Icons.logout_rounded,
+            title: 'Sign out',
             onTap: () => ref.read(sessionProvider.notifier).signOut(),
           ),
-          const Padding(padding: AppSpacing.screen, child: DemoBanner()),
+          const SizedBox(height: AppSpacing.md),
+          const DemoBanner(),
+          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );

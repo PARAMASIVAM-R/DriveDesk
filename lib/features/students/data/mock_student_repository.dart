@@ -6,7 +6,7 @@ import '../domain/student.dart';
 import '../domain/student_repository.dart';
 
 final studentRepositoryProvider = Provider<StudentRepository>(
-  (ref) => MockStudentRepository(ref.watch(mockDatabaseProvider)),
+  (ref) => MockStudentRepository(watchPersistedDatabase(ref)),
 );
 
 class MockStudentRepository implements StudentRepository {
@@ -22,6 +22,9 @@ class MockStudentRepository implements StudentRepository {
       _db.packages.values.toList();
 
   @override
-  Future<Student> saveStudent(Student student) async =>
-      _db.students[student.id] = student;
+  Future<Student> saveStudent(Student student) async {
+    _db.students[student.id] = student;
+    _db.markDirty();
+    return student;
+  }
 }

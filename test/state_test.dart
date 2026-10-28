@@ -9,6 +9,8 @@ import 'package:drive_desk/features/reminders/domain/reminder.dart';
 import 'package:drive_desk/features/reminders/presentation/reminder_providers.dart';
 import 'package:drive_desk/features/scheduling/domain/lesson.dart';
 import 'package:drive_desk/features/scheduling/presentation/lesson_providers.dart';
+import 'package:drive_desk/features/settings/presentation/school_providers.dart';
+import 'package:drive_desk/features/staff/domain/staff.dart';
 import 'package:drive_desk/features/students/presentation/student_providers.dart';
 import 'package:drive_desk/shared/providers/core_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -208,5 +210,35 @@ void main() {
           .every((r) => r.studentId == 'stu_002'),
       isTrue,
     );
+  });
+
+  test('owner can add a vehicle and edit an instructor', () async {
+    final c = makeContainer();
+    final vehicles = (await c.read(vehiclesProvider.future)).length;
+    final team = c.read(teamActionsProvider);
+    await team.saveVehicle(
+      const Vehicle(
+        id: 'veh_new',
+        schoolId: 'sch_001',
+        registration: 'TN 09 ZZ 0001',
+        model: 'Hyundai i20',
+        transmission: 'Automatic',
+      ),
+    );
+    expect(await c.read(vehiclesProvider.future), hasLength(vehicles + 1));
+
+    final instructor = (await c.read(staffProvider.future))
+        .firstWhere((s) => s.role == StaffRole.instructor);
+    await team.saveStaff(
+      StaffMember(
+        id: instructor.id,
+        schoolId: instructor.schoolId,
+        name: 'Renamed Instructor',
+        phone: instructor.phone,
+        role: instructor.role,
+      ),
+    );
+    await c.read(staffProvider.future);
+    expect(c.read(instructorNameProvider(instructor.id)), 'Renamed Instructor');
   });
 }

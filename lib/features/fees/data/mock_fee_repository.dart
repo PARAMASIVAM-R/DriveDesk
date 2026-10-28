@@ -7,7 +7,7 @@ import '../domain/fee_repository.dart';
 import '../domain/fees.dart';
 
 final feeRepositoryProvider = Provider<FeeRepository>(
-  (ref) => MockFeeRepository(ref.watch(mockDatabaseProvider)),
+  (ref) => MockFeeRepository(watchPersistedDatabase(ref)),
 );
 
 class MockFeeRepository implements FeeRepository {
@@ -19,8 +19,12 @@ class MockFeeRepository implements FeeRepository {
   Future<List<Payment>> fetchPayments() async => _db.payments.values.toList();
 
   @override
-  Future<Payment> recordPayment(Payment payment) async =>
-      _db.payments.putIfAbsent(payment.id, () => payment);
+  Future<Payment> recordPayment(Payment payment) async {
+    if (_db.payments.containsKey(payment.id)) return _db.payments[payment.id]!;
+    _db.payments[payment.id] = payment;
+    _db.markDirty();
+    return payment;
+  }
 
   @override
   Future<Payment> voidPayment(String paymentId, String reason) async {
@@ -29,7 +33,9 @@ class MockFeeRepository implements FeeRepository {
     if (existing.isVoided) {
       throw const AppException('Payment is already voided.');
     }
-    return _db.payments[paymentId] = existing.voided(reason);
+    final voided = _db.payments[paymentId] = existing.voided(reason);
+    _db.markDirty();
+    return voided;
   }
 
   @override
@@ -37,10 +43,14 @@ class MockFeeRepository implements FeeRepository {
       _db.installments.values.toList();
 
   @override
-  Future<Installment> saveInstallment(Installment installment) async =>
-      _db.installments[installment.id] = installment;
+  Future<Installment> saveInstallment(Installment installment) async {
+    _db.installments[installment.id] = installment;
+    _db.markDirty();
+    return installment;
+  }
 
   @override
-  Future<void> removeInstallment(String installmentId) async =>
-      _db.installments.remove(installmentId);
+  Future<void> removeInstallment(String installmentId) async {
+    if (_db.installments.remove(installmentId) != null) _db.markDirty();
+  }
 }

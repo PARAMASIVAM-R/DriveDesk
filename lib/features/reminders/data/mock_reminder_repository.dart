@@ -6,7 +6,7 @@ import '../domain/reminder.dart';
 import '../domain/reminder_repository.dart';
 
 final reminderRepositoryProvider = Provider<ReminderRepository>(
-  (ref) => MockReminderRepository(ref.watch(mockDatabaseProvider)),
+  (ref) => MockReminderRepository(watchPersistedDatabase(ref)),
 );
 
 class MockReminderRepository implements ReminderRepository {
@@ -19,6 +19,8 @@ class MockReminderRepository implements ReminderRepository {
       Map.of(_db.reminderStatuses);
 
   @override
-  Future<void> setStatus(String reminderId, ReminderStatus status) async =>
-      _db.reminderStatuses[reminderId] = status;
+  Future<void> setStatus(String reminderId, ReminderStatus status) async {
+    _db.reminderStatuses[reminderId] = status;
+    _db.markDirty();
+  }
 }

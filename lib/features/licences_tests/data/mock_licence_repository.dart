@@ -6,7 +6,7 @@ import '../domain/licence.dart';
 import '../domain/licence_repository.dart';
 
 final licenceRepositoryProvider = Provider<LicenceRepository>(
-  (ref) => MockLicenceRepository(ref.watch(mockDatabaseProvider)),
+  (ref) => MockLicenceRepository(watchPersistedDatabase(ref)),
 );
 
 class MockLicenceRepository implements LicenceRepository {
@@ -19,8 +19,11 @@ class MockLicenceRepository implements LicenceRepository {
       _db.licences.values.toList();
 
   @override
-  Future<LicenceRecord> saveLicence(LicenceRecord record) async =>
-      _db.licences[record.id] = record;
+  Future<LicenceRecord> saveLicence(LicenceRecord record) async {
+    _db.licences[record.id] = record;
+    _db.markDirty();
+    return record;
+  }
 
   @override
   Future<List<DrivingTest>> fetchTests() async => _db.tests.values.toList();
@@ -30,5 +33,6 @@ class MockLicenceRepository implements LicenceRepository {
     for (final t in tests) {
       _db.tests[t.id] = t;
     }
+    _db.markDirty();
   }
 }

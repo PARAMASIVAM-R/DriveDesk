@@ -25,6 +25,20 @@ class DemoSession {
   final String userId;
   final String displayName;
   final String schoolId;
+
+  Map<String, Object?> toJson() => {
+    'role': role.name,
+    'userId': userId,
+    'displayName': displayName,
+    'schoolId': schoolId,
+  };
+
+  factory DemoSession.fromJson(Map<String, Object?> json) => DemoSession(
+    role: UserRole.values.byName(json['role'] as String),
+    userId: json['userId'] as String,
+    displayName: json['displayName'] as String,
+    schoolId: json['schoolId'] as String,
+  );
 }
 
 /// Central place for role checks. These only shape the prototype UX;

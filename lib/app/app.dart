@@ -12,8 +12,8 @@ class DriveDeskApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'DriveDesk',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.dark,
+      theme: AppTheme.dark(),
       routerConfig: ref.watch(routerProvider),
     );
   }

@@ -28,6 +28,22 @@ class CoursePackage {
   final String name;
   final double fee;
   final int lessonCount;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'name': name,
+    'fee': fee,
+    'lessonCount': lessonCount,
+  };
+
+  factory CoursePackage.fromJson(Map<String, Object?> json) => CoursePackage(
+    id: json['id'] as String,
+    schoolId: json['schoolId'] as String,
+    name: json['name'] as String,
+    fee: (json['fee'] as num).toDouble(),
+    lessonCount: (json['lessonCount'] as num).toInt(),
+  );
 }
 
 class Student {
@@ -58,6 +74,37 @@ class Student {
   final double agreedFee;
   final StudentStatus status;
   final String notes;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'fullName': fullName,
+    'phone': phone,
+    'address': address,
+    'dateOfBirth': dateOfBirth?.toIso8601String(),
+    'enrolmentDate': enrolmentDate.toIso8601String(),
+    'packageId': packageId,
+    'agreedFee': agreedFee,
+    'status': status.name,
+    'notes': notes,
+  };
+
+  factory Student.fromJson(Map<String, Object?> json) {
+    final dob = json['dateOfBirth'] as String?;
+    return Student(
+      id: json['id'] as String,
+      schoolId: json['schoolId'] as String,
+      fullName: json['fullName'] as String,
+      phone: json['phone'] as String,
+      address: json['address'] as String? ?? '',
+      dateOfBirth: dob == null ? null : DateTime.parse(dob),
+      enrolmentDate: DateTime.parse(json['enrolmentDate'] as String),
+      packageId: json['packageId'] as String,
+      agreedFee: (json['agreedFee'] as num).toDouble(),
+      status: StudentStatus.values.byName(json['status'] as String),
+      notes: json['notes'] as String? ?? '',
+    );
+  }
 
   String get initials {
     final parts = fullName.trim().split(RegExp(r'\s+'));

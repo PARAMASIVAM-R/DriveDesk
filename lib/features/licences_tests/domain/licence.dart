@@ -21,6 +21,28 @@ class LicenceRecord {
   final DateTime? issueDate;
   final DateTime? expiryDate;
 
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'studentId': studentId,
+    'llrNumber': llrNumber,
+    'issueDate': issueDate?.toIso8601String(),
+    'expiryDate': expiryDate?.toIso8601String(),
+  };
+
+  factory LicenceRecord.fromJson(Map<String, Object?> json) {
+    final issued = json['issueDate'] as String?;
+    final expires = json['expiryDate'] as String?;
+    return LicenceRecord(
+      id: json['id'] as String,
+      schoolId: json['schoolId'] as String,
+      studentId: json['studentId'] as String,
+      llrNumber: json['llrNumber'] as String?,
+      issueDate: issued == null ? null : DateTime.parse(issued),
+      expiryDate: expires == null ? null : DateTime.parse(expires),
+    );
+  }
+
   LicenceRecord copyWith({
     String? Function()? llrNumber,
     DateTime? Function()? issueDate,
@@ -99,6 +121,31 @@ class DrivingTest {
 
   bool get isOpen =>
       status == TestStatus.scheduled || status == TestStatus.notScheduled;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'studentId': studentId,
+    'attempt': attempt,
+    'scheduledAt': scheduledAt?.toIso8601String(),
+    'location': location,
+    'status': status.name,
+    'notes': notes,
+  };
+
+  factory DrivingTest.fromJson(Map<String, Object?> json) {
+    final at = json['scheduledAt'] as String?;
+    return DrivingTest(
+      id: json['id'] as String,
+      schoolId: json['schoolId'] as String,
+      studentId: json['studentId'] as String,
+      attempt: (json['attempt'] as num).toInt(),
+      scheduledAt: at == null ? null : DateTime.parse(at),
+      location: json['location'] as String? ?? '',
+      status: TestStatus.values.byName(json['status'] as String),
+      notes: json['notes'] as String? ?? '',
+    );
+  }
 
   DrivingTest copyWith({
     TestStatus? status,

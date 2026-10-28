@@ -46,6 +46,34 @@ class Lesson {
 
   bool get isUpcoming => status == LessonStatus.scheduled;
 
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'studentId': studentId,
+    'start': start.toIso8601String(),
+    'end': end.toIso8601String(),
+    'instructorId': instructorId,
+    'vehicleId': vehicleId,
+    'status': status.name,
+    'notes': notes,
+    'rescheduledFromId': rescheduledFromId,
+    'rescheduledToId': rescheduledToId,
+  };
+
+  factory Lesson.fromJson(Map<String, Object?> json) => Lesson(
+    id: json['id'] as String,
+    schoolId: json['schoolId'] as String,
+    studentId: json['studentId'] as String,
+    start: DateTime.parse(json['start'] as String),
+    end: DateTime.parse(json['end'] as String),
+    instructorId: json['instructorId'] as String?,
+    vehicleId: json['vehicleId'] as String?,
+    status: LessonStatus.values.byName(json['status'] as String),
+    notes: json['notes'] as String? ?? '',
+    rescheduledFromId: json['rescheduledFromId'] as String?,
+    rescheduledToId: json['rescheduledToId'] as String?,
+  );
+
   bool overlaps(Lesson other) =>
       start.isBefore(other.end) && other.start.isBefore(end);
 
@@ -106,6 +134,29 @@ class RescheduleRequest {
   final String reason;
   final DateTime createdAt;
   final RescheduleRequestStatus status;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'schoolId': schoolId,
+    'studentId': studentId,
+    'lessonId': lessonId,
+    'preferredStart': preferredStart.toIso8601String(),
+    'reason': reason,
+    'createdAt': createdAt.toIso8601String(),
+    'status': status.name,
+  };
+
+  factory RescheduleRequest.fromJson(Map<String, Object?> json) =>
+      RescheduleRequest(
+        id: json['id'] as String,
+        schoolId: json['schoolId'] as String,
+        studentId: json['studentId'] as String,
+        lessonId: json['lessonId'] as String,
+        preferredStart: DateTime.parse(json['preferredStart'] as String),
+        reason: json['reason'] as String? ?? '',
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        status: RescheduleRequestStatus.values.byName(json['status'] as String),
+      );
 
   RescheduleRequest copyWith({RescheduleRequestStatus? status}) {
     return RescheduleRequest(

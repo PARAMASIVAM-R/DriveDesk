@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../core/utils/formatters.dart';
 import '../../features/fees/domain/fees.dart';
 import '../../features/licences_tests/domain/licence.dart';
@@ -7,10 +9,15 @@ import '../../features/settings/domain/school.dart';
 import '../../features/staff/domain/staff.dart';
 import '../../features/students/domain/student.dart';
 
-/// Session-scoped in-memory storage for the frontend MVP. All data is
-/// fictional and is reset when the app restarts.
+/// In-memory storage for the frontend MVP. All data is fictional. The whole
+/// database can be serialised to a JSON snapshot (see [toJson]) so it can be
+/// persisted on device between app runs.
 class MockDatabase {
   MockDatabase._(this.school);
+
+  /// Version of the snapshot format produced by [toJson]. Bump when the
+  /// shape changes incompatibly; older snapshots are then discarded.
+  static const schemaVersion = 1;
 
   School school;
   final Map<String, StaffMember> staff = {};
@@ -24,6 +31,128 @@ class MockDatabase {
   final Map<String, Payment> payments = {};
   final Map<String, Installment> installments = {};
   final Map<String, ReminderStatus> reminderStatuses = {};
+
+  final List<void Function()> _listeners = [];
+
+  /// Registers [listener] to be called after every [markDirty].
+  void addListener(void Function() listener) => _listeners.add(listener);
+
+  void removeListener(void Function() listener) => _listeners.remove(listener);
+
+  /// Repositories call this after every successful write so the snapshot
+  /// saver can persist the change.
+  void markDirty() {
+    for (final l in List.of(_listeners)) {
+      l();
+    }
+  }
+
+  /// Replaces all data with that of [other] in place, keeping this instance
+  /// (and its listeners). Does not call [markDirty].
+  void replaceWith(MockDatabase other) {
+    school = other.school;
+    void copy<T>(Map<String, T> to, Map<String, T> from) => to
+      ..clear()
+      ..addAll(from);
+    copy(staff, other.staff);
+    copy(vehicles, other.vehicles);
+    copy(packages, other.packages);
+    copy(students, other.students);
+    copy(lessons, other.lessons);
+    copy(rescheduleRequests, other.rescheduleRequests);
+    copy(licences, other.licences);
+    copy(tests, other.tests);
+    copy(payments, other.payments);
+    copy(installments, other.installments);
+    copy(reminderStatuses, other.reminderStatuses);
+  }
+
+  Map<String, Object?> toJson() {
+    List<Map<String, Object?>> list<T>(
+      Map<String, T> m,
+      Map<String, Object?> Function(T) toJson,
+    ) => [for (final e in m.values) toJson(e)];
+
+    return {
+      'version': schemaVersion,
+      'school': school.toJson(),
+      'staff': list(staff, (e) => e.toJson()),
+      'vehicles': list(vehicles, (e) => e.toJson()),
+      'packages': list(packages, (e) => e.toJson()),
+      'students': list(students, (e) => e.toJson()),
+      'lessons': list(lessons, (e) => e.toJson()),
+      'rescheduleRequests': list(rescheduleRequests, (e) => e.toJson()),
+      'licences': list(licences, (e) => e.toJson()),
+      'tests': list(tests, (e) => e.toJson()),
+      'payments': list(payments, (e) => e.toJson()),
+      'installments': list(installments, (e) => e.toJson()),
+      'reminderStatuses': {
+        for (final e in reminderStatuses.entries) e.key: e.value.name,
+      },
+    };
+  }
+
+  /// Rebuilds a database from a [toJson] snapshot. Throws [FormatException]
+  /// (or a type error) when the snapshot is malformed or from another
+  /// schema version; callers should fall back to seed data.
+  factory MockDatabase.fromJson(Map<String, Object?> json) {
+    final version = json['version'];
+    if (version != schemaVersion) {
+      throw FormatException('Unsupported snapshot version: $version');
+    }
+    final db = MockDatabase._(
+      School.fromJson((json['school'] as Map).cast<String, Object?>()),
+    );
+    void load<T>(
+      String key,
+      Map<String, T> into,
+      T Function(Map<String, Object?>) fromJson,
+      String Function(T) idOf,
+    ) {
+      for (final raw in json[key] as List) {
+        final e = fromJson((raw as Map).cast<String, Object?>());
+        into[idOf(e)] = e;
+      }
+    }
+
+    load('staff', db.staff, StaffMember.fromJson, (e) => e.id);
+    load('vehicles', db.vehicles, Vehicle.fromJson, (e) => e.id);
+    load('packages', db.packages, CoursePackage.fromJson, (e) => e.id);
+    load('students', db.students, Student.fromJson, (e) => e.id);
+    load('lessons', db.lessons, Lesson.fromJson, (e) => e.id);
+    load(
+      'rescheduleRequests',
+      db.rescheduleRequests,
+      RescheduleRequest.fromJson,
+      (e) => e.id,
+    );
+    load('licences', db.licences, LicenceRecord.fromJson, (e) => e.id);
+    load('tests', db.tests, DrivingTest.fromJson, (e) => e.id);
+    load('payments', db.payments, Payment.fromJson, (e) => e.id);
+    load('installments', db.installments, Installment.fromJson, (e) => e.id);
+    final statuses = (json['reminderStatuses'] as Map).cast<String, Object?>();
+    for (final e in statuses.entries) {
+      db.reminderStatuses[e.key] = ReminderStatus.values.byName(
+        e.value as String,
+      );
+    }
+    return db;
+  }
+
+  /// Parses a JSON snapshot string, returning null if it is missing or
+  /// invalid in any way.
+  static MockDatabase? tryDecode(String? source) {
+    if (source == null || source.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(source);
+      if (decoded is! Map) return null;
+      return MockDatabase.fromJson(decoded.cast<String, Object?>());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String encode() => jsonEncode(toJson());
 
   /// Builds the demo dataset with dates relative to [now], covering edge
   /// cases: no LLR, expired/expiring LLR, failed and rescheduled tests,

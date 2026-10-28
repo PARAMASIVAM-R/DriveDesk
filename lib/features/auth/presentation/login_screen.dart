@@ -19,24 +19,24 @@ class LoginScreen extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Gradient backdrop that the logo and role cards float over.
-          const Positioned(
-            top: 0,
+          // Amber glow behind the gauge, like a lit instrument cluster.
+          Positioned(
+            top: -120,
             left: 0,
             right: 0,
-            height: 340,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: AppColors.brandGradient,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(44),
+            child: Center(
+              child: Container(
+                width: 420,
+                height: 420,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.amber.withValues(alpha: 0.20),
+                      AppColors.amber.withValues(alpha: 0),
+                    ],
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(right: -60, top: -40, child: _Orb(220, 0.14)),
-                  Positioned(left: -50, top: 140, child: _Orb(150, 0.10)),
-                ],
               ),
             ),
           ),
@@ -44,20 +44,26 @@ class LoginScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
                 const Center(child: _AppLogo()),
                 const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'DriveDesk',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(text: 'Drive'),
+                      TextSpan(
+                        text: 'Desk',
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ],
                   ),
+                  style: theme.textTheme.headlineMedium,
                   textAlign: TextAlign.center,
                 ),
                 Text(
                   'Driving school manager',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: AppColors.textMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -152,49 +158,14 @@ class _AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: const GlossyIcon(
+    return const GaugeRing(
+      value: 0.72,
+      size: 168,
+      strokeWidth: 10,
+      child: Icon(
         Icons.directions_car_filled_rounded,
-        color: Color(0xFFFF8A3D),
-        size: 76,
-      ),
-    );
-  }
-}
-
-class _Orb extends StatelessWidget {
-  const _Orb(this.size, this.opacity);
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          center: const Alignment(-0.3, -0.4),
-          colors: [
-            Colors.white.withValues(alpha: opacity * 1.8),
-            Colors.white.withValues(alpha: 0),
-          ],
-        ),
+        size: 52,
+        color: AppColors.amber,
       ),
     );
   }

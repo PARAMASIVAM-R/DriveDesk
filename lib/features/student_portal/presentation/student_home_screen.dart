@@ -53,14 +53,11 @@ class StudentHomeScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Hi, ${session?.displayName.split(' ').first ?? ''}',
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(color: Colors.white),
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   Text(
                     schoolName,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
+                    style: const TextStyle(color: AppColors.textMuted),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _ProgressRing(completed: completed),
@@ -199,37 +196,44 @@ class _ProgressRing extends StatelessWidget {
     final progress = (completed / _target).clamp(0.0, 1.0);
     return Row(
       children: [
-        SizedBox(
-          width: 58,
-          height: 58,
-          child: Stack(
-            fit: StackFit.expand,
+        GaugeRing(
+          value: progress,
+          size: 104,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(
-                value: progress,
-                strokeWidth: 7,
-                strokeCap: StrokeCap.round,
-                color: Colors.white,
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
-              ),
-              Center(
-                child: Text(
-                  '$completed',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
+              Text(
+                '$completed',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
                 ),
+              ),
+              const Text(
+                'of $_target',
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
             ],
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: AppSpacing.lg),
         const Expanded(
-          child: Text(
-            'classes completed\nKeep going — every lesson counts.',
-            style: TextStyle(color: Colors.white, height: 1.35),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Classes completed',
+                style: TextStyle(
+                  color: AppColors.amber,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: AppSpacing.xs),
+              Text(
+                'Keep going — every lesson counts.',
+                style: TextStyle(height: 1.35),
+              ),
+            ],
           ),
         ),
       ],

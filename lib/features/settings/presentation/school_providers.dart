@@ -48,3 +48,22 @@ final vehicleLabelProvider = Provider.family<String, String?>((ref, id) {
   final vehicles = ref.watch(vehiclesProvider).value ?? const [];
   return vehicles.where((v) => v.id == id).firstOrNull?.label ?? 'Unknown';
 });
+
+/// Owner actions for the team and fleet; lists reload after each save.
+final teamActionsProvider = Provider<TeamActions>(TeamActions.new);
+
+class TeamActions {
+  TeamActions(this._ref);
+
+  final Ref _ref;
+
+  Future<void> saveStaff(StaffMember member) async {
+    await _ref.read(schoolRepositoryProvider).saveStaff(member);
+    _ref.invalidate(staffProvider);
+  }
+
+  Future<void> saveVehicle(Vehicle vehicle) async {
+    await _ref.read(schoolRepositoryProvider).saveVehicle(vehicle);
+    _ref.invalidate(vehiclesProvider);
+  }
+}

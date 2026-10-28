@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_theme.dart';
@@ -36,8 +38,8 @@ class _PressableState extends State<Pressable> {
   }
 }
 
-/// Raised card with a light top edge, soft gradient face and layered
-/// shadow: the base "3D" surface used across the app.
+/// Raised charcoal card with a lit top edge and deep layered shadow: the
+/// base "3D" surface used across the app.
 class Surface3D extends StatelessWidget {
   const Surface3D({
     super.key,
@@ -46,6 +48,7 @@ class Surface3D extends StatelessWidget {
     this.padding = const EdgeInsets.all(AppSpacing.lg),
     this.radius = AppRadius.lg,
     this.tint,
+    this.highlighted = false,
   });
 
   final Widget child;
@@ -53,38 +56,32 @@ class Surface3D extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double radius;
 
-  /// Colour the shadow and face are lightly tinted with.
+  /// Colour of the faint glow in the card's corner.
   final Color? tint;
+
+  /// Draws an amber outline, e.g. for the selected or primary item.
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final face = theme.colorScheme.surfaceContainerLowest;
-    final tintColor = tint ?? theme.colorScheme.primary;
     final shape = BorderRadius.circular(radius);
+    final glow = tint ?? AppColors.amber;
 
     final surface = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: shape,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.alphaBlend(
-              Colors.white.withValues(alpha: dark ? 0.04 : 0.6),
-              face,
-            ),
-            Color.alphaBlend(tintColor.withValues(alpha: 0.04), face),
-          ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.surfaceHigh, AppColors.surface],
         ),
         border: Border.all(
-          color: dark
-              ? Colors.white.withValues(alpha: 0.07)
-              : Colors.white.withValues(alpha: 0.95),
-          width: 1.2,
+          color: highlighted
+              ? AppColors.amber.withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.06),
+          width: highlighted ? 1.4 : 1,
         ),
-        boxShadow: AppShadows.raised(tintColor, dark: dark),
+        boxShadow: AppShadows.raised(glow),
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -92,7 +89,35 @@ class Surface3D extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Padding(padding: padding, child: child),
+          splashColor: AppColors.amber.withValues(alpha: 0.12),
+          highlightColor: AppColors.amber.withValues(alpha: 0.05),
+          child: Stack(
+            // Keep the parent's constraints, e.g. a grid cell's fixed height.
+            fit: StackFit.passthrough,
+            children: [
+              // Faint accent glow in the top-right corner.
+              Positioned(
+                right: -40,
+                top: -40,
+                child: IgnorePointer(
+                  child: Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          glow.withValues(alpha: 0.10),
+                          glow.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(padding: padding, child: child),
+            ],
+          ),
         ),
       ),
     );
@@ -100,13 +125,13 @@ class Surface3D extends StatelessWidget {
   }
 }
 
-/// Glossy, extruded icon "orb": a gradient tile with a specular highlight
-/// and a coloured glow underneath.
+/// Instrument-style icon dial: a dark domed disc with a glowing coloured
+/// ring, like the knobs on a car's dashboard.
 class GlossyIcon extends StatelessWidget {
   const GlossyIcon(
     this.icon, {
     super.key,
-    this.color = AppColors.brand,
+    this.color = AppColors.amber,
     this.size = 44,
   });
 
@@ -116,72 +141,171 @@ class GlossyIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hsl = HSLColor.fromColor(color);
-    final light = hsl
-        .withLightness((hsl.lightness + 0.14).clamp(0, 1))
-        .toColor();
-    final deep = hsl
-        .withLightness((hsl.lightness - 0.12).clamp(0, 1))
-        .toColor();
-    final r = BorderRadius.circular(size * 0.32);
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        borderRadius: r,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [light, color, deep],
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          center: Alignment(-0.35, -0.45),
+          radius: 0.95,
+          colors: [Color(0xFF3A3A42), Color(0xFF1B1B20)],
         ),
-        boxShadow: AppShadows.glow(color),
+        border: Border.all(color: color, width: size >= 40 ? 2 : 1.6),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.30),
+            blurRadius: 14,
+            spreadRadius: -2,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: ClipRRect(
-        borderRadius: r,
-        child: Stack(
-          children: [
-            // Specular highlight across the top half.
-            Positioned(
-              left: -size * 0.2,
-              right: -size * 0.2,
-              top: -size * 0.55,
-              height: size * 0.95,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.45),
-                      Colors.white.withValues(alpha: 0.05),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Center(
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: size * 0.5,
-                shadows: [
-                  Shadow(
-                    color: deep.withValues(alpha: 0.6),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1.5),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      child: Icon(icon, color: color, size: size * 0.46),
+    );
+  }
+}
+
+/// Circular gauge in the style of a speedometer: a dim track, a glowing
+/// amber arc for [value] (0–1), tick marks and a centre slot.
+class GaugeRing extends StatelessWidget {
+  const GaugeRing({
+    super.key,
+    required this.value,
+    this.size = 120,
+    this.color = AppColors.amber,
+    this.strokeWidth = 9,
+    this.child,
+  });
+
+  final double value;
+  final double size;
+  final Color color;
+  final double strokeWidth;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: value.clamp(0.0, 1.0)),
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeOutCubic,
+        builder: (context, v, _) => CustomPaint(
+          painter: _GaugePainter(v, color, strokeWidth),
+          child: Center(child: child),
         ),
       ),
     );
   }
 }
 
-/// Gradient hero panel with soft floating "bubbles" for depth. Used at the
+class _GaugePainter extends CustomPainter {
+  _GaugePainter(this.value, this.color, this.stroke);
+
+  final double value;
+  final Color color;
+  final double stroke;
+
+  static const _start = math.pi * 0.75;
+  static const _sweep = math.pi * 1.5;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2 - stroke;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // Inner dark dial.
+    canvas.drawCircle(
+      center,
+      radius - stroke * 1.2,
+      Paint()
+        ..shader = const RadialGradient(
+          center: Alignment(-0.3, -0.4),
+          colors: [Color(0xFF34343B), Color(0xFF17171B)],
+        ).createShader(rect),
+    );
+
+    // Tick marks.
+    final tick = Paint()
+      ..color = Colors.white.withValues(alpha: 0.18)
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i <= 20; i++) {
+      final a = _start + _sweep * i / 20;
+      final outer = radius - stroke * 1.6;
+      final inner = outer - (i % 5 == 0 ? 7 : 4);
+      canvas.drawLine(
+        center + Offset(math.cos(a), math.sin(a)) * inner,
+        center + Offset(math.cos(a), math.sin(a)) * outer,
+        tick,
+      );
+    }
+
+    final base = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      rect,
+      _start,
+      _sweep,
+      false,
+      base..color = Colors.white.withValues(alpha: 0.08),
+    );
+    if (value <= 0) return;
+
+    final sweep = _sweep * value;
+    // Soft glow underneath the arc.
+    canvas.drawArc(
+      rect,
+      _start,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke * 1.8
+        ..strokeCap = StrokeCap.round
+        ..color = color.withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    canvas.drawArc(
+      rect,
+      _start,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..shader = SweepGradient(
+          startAngle: _start,
+          endAngle: _start + _sweep,
+          colors: [AppColors.amberDeep, color, AppColors.amberSoft],
+          transform: const GradientRotation(0),
+        ).createShader(rect),
+    );
+    // Needle dot at the arc's end.
+    final end = _start + sweep;
+    canvas.drawCircle(
+      center + Offset(math.cos(end), math.sin(end)) * radius,
+      stroke * 0.42,
+      Paint()..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GaugePainter old) =>
+      old.value != value || old.color != color || old.stroke != stroke;
+}
+
+/// Dark hero panel with an amber glow and decorative dial arcs. Used at the
 /// top of the login screen and home dashboards.
 class HeroPanel extends StatelessWidget {
   const HeroPanel({
@@ -201,46 +325,46 @@ class HeroPanel extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: r,
-        gradient: AppColors.brandGradient,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandDeep.withValues(alpha: 0.45),
-            blurRadius: 30,
-            spreadRadius: -8,
-            offset: const Offset(0, 18),
-          ),
-        ],
+        gradient: AppColors.panelGradient,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        boxShadow: AppShadows.raised(AppColors.amber),
       ),
       child: ClipRRect(
         borderRadius: r,
         child: Stack(
           children: [
-            const Positioned(right: -40, top: -50, child: _Bubble(170, 0.16)),
-            const Positioned(left: -30, bottom: -60, child: _Bubble(140, 0.10)),
-            const Positioned(right: 60, bottom: -30, child: _Bubble(70, 0.12)),
-            // Top sheen gives the panel a curved glass edge.
-            Positioned.fill(
-              child: DecoratedBox(
+            Positioned(
+              right: -70,
+              top: -70,
+              child: Container(
+                width: 230,
+                height: 230,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.center,
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
                     colors: [
-                      Colors.white.withValues(alpha: 0.18),
-                      Colors.white.withValues(alpha: 0),
+                      AppColors.amber.withValues(alpha: 0.22),
+                      AppColors.amber.withValues(alpha: 0),
                     ],
                   ),
                 ),
               ),
             ),
+            Positioned(
+              right: -46,
+              top: -46,
+              child: _Arc(size: 150, opacity: 0.35),
+            ),
+            Positioned(
+              right: -20,
+              top: -20,
+              child: _Arc(size: 98, opacity: 0.18),
+            ),
             Padding(
               padding: padding,
               child: DefaultTextStyle.merge(
-                style: const TextStyle(color: Colors.white),
-                child: IconTheme.merge(
-                  data: const IconThemeData(color: Colors.white),
-                  child: child,
-                ),
+                style: const TextStyle(color: AppColors.text),
+                child: child,
               ),
             ),
           ],
@@ -250,8 +374,8 @@ class HeroPanel extends StatelessWidget {
   }
 }
 
-class _Bubble extends StatelessWidget {
-  const _Bubble(this.size, this.opacity);
+class _Arc extends StatelessWidget {
+  const _Arc({required this.size, required this.opacity});
 
   final double size;
   final double opacity;
@@ -263,19 +387,16 @@ class _Bubble extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          center: const Alignment(-0.3, -0.4),
-          colors: [
-            Colors.white.withValues(alpha: opacity * 1.6),
-            Colors.white.withValues(alpha: opacity * 0.2),
-          ],
+        border: Border.all(
+          color: AppColors.amber.withValues(alpha: opacity),
+          width: 1.5,
         ),
       ),
     );
   }
 }
 
-/// Gradient initials avatar with a soft glow.
+/// Amber initials avatar with a soft glow.
 class Avatar3D extends StatelessWidget {
   const Avatar3D({super.key, required this.initials, this.size = 42});
 
@@ -291,14 +412,17 @@ class Avatar3D extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: AppColors.brandGradient,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-        boxShadow: AppShadows.glow(AppColors.brand),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+        boxShadow: AppShadows.glow(AppColors.amber),
       ),
       child: Text(
         initials,
         style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
+          color: AppColors.onAmber,
+          fontWeight: FontWeight.w800,
           fontSize: size * 0.36,
         ),
       ),
@@ -306,7 +430,7 @@ class Avatar3D extends StatelessWidget {
   }
 }
 
-/// Small frosted pill for use on top of a [HeroPanel].
+/// Small outlined pill for use on top of a [HeroPanel].
 class GlassPill extends StatelessWidget {
   const GlassPill({super.key, required this.icon, required this.label});
 
@@ -318,14 +442,14 @@ class GlassPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: AppColors.amber.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.amber.withValues(alpha: 0.45)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white),
+          Icon(icon, size: 14, color: AppColors.amber),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -333,13 +457,140 @@ class GlassPill extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.amberSoft,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Raised menu row with an instrument-style icon, used on "More" screens.
+class MenuTile extends StatelessWidget {
+  const MenuTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.badge = 0,
+    this.color = AppColors.amber,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final int badge;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
+      child: Surface3D(
+        onTap: onTap,
+        tint: color,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm + 2,
+        ),
+        child: Row(
+          children: [
+            GlossyIcon(icon, color: color, size: 38),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            if (badge > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.amber,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$badge',
+                  style: const TextStyle(
+                    color: AppColors.onAmber,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            const SizedBox(width: AppSpacing.xs),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Large amber call-to-action pill, as used for the main action on a screen.
+class AmberPillButton extends StatelessWidget {
+  const AmberPillButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onPressed,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          gradient: AppColors.brandGradient,
+          boxShadow: AppShadows.glow(AppColors.amber),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onPressed,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xl,
+                vertical: 16,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.onAmber,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  if (icon != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(icon, color: AppColors.onAmber, size: 20),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

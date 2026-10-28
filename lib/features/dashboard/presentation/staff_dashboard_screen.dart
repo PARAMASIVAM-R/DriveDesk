@@ -9,6 +9,7 @@ import '../../../shared/providers/core_providers.dart';
 import '../../auth/presentation/session_provider.dart';
 import '../../fees/presentation/fee_providers.dart';
 import '../../licences_tests/presentation/licence_providers.dart';
+import '../../scheduling/domain/lesson.dart';
 import '../../scheduling/presentation/lesson_providers.dart';
 import '../../scheduling/presentation/lesson_tile.dart';
 import '../../settings/presentation/school_providers.dart';
@@ -60,6 +61,9 @@ class _DashboardBody extends ConsumerWidget {
     final fees = ref.watch(schoolFeeTotalsProvider);
     final attention = ref.watch(attentionItemsProvider);
     final now = ref.watch(clockProvider)();
+    final doneToday = today
+        .where((l) => l.status == LessonStatus.completed)
+        .length;
 
     return ListView(
       padding: AppSpacing.screen,
@@ -76,14 +80,11 @@ class _DashboardBody extends ConsumerWidget {
                       children: [
                         Text(
                           greeting,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(color: Colors.white),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         Text(
                           schoolName,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
+                          style: const TextStyle(color: AppColors.textMuted),
                         ),
                       ],
                     ),
@@ -91,8 +92,11 @@ class _DashboardBody extends ConsumerWidget {
                   IconButton.filledTonal(
                     tooltip: 'Reminders',
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.18),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.amber.withValues(alpha: 0.14),
+                      foregroundColor: AppColors.amber,
+                      side: BorderSide(
+                        color: AppColors.amber.withValues(alpha: 0.5),
+                      ),
                     ),
                     icon: const Icon(Icons.notifications_rounded),
                     onPressed: () => context.push('/reminders'),
@@ -100,21 +104,58 @@ class _DashboardBody extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text(
-                formatDate(now),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                '${today.length} classes today · '
-                '${attention.length} items need attention',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                children: [
+                  GaugeRing(
+                    value: today.isEmpty ? 0 : doneToday / today.length,
+                    size: 108,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$doneToday/${today.length}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const Text(
+                          'classes',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          formatDate(now),
+                          style: const TextStyle(
+                            color: AppColors.amber,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          '${today.length} classes today · '
+                          '${attention.length} items need attention',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
               Wrap(
