@@ -55,7 +55,7 @@ class StaffScreen extends ConsumerWidget {
                         label: m.role.label,
                         color: m.role == StaffRole.owner
                             ? AppColors.amber
-                            : AppColors.textMuted,
+                            : AppColors.neutral,
                       ),
                       onTap: isOwner ? () => _editStaff(context, ref, m) : null,
                     ),

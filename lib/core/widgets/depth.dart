@@ -38,8 +38,8 @@ class _PressableState extends State<Pressable> {
   }
 }
 
-/// Raised charcoal card with a lit top edge and deep layered shadow: the
-/// base "3D" surface used across the app.
+/// Raised card with a lit top edge and deep layered shadow: the base "3D"
+/// surface used across the app, in both themes.
 class Surface3D extends StatelessWidget {
   const Surface3D({
     super.key,
@@ -64,24 +64,21 @@ class Surface3D extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final shape = BorderRadius.circular(radius);
     final glow = tint ?? AppColors.amber;
 
     final surface = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: shape,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surfaceHigh, AppColors.surface],
-        ),
+        gradient: p.surfaceGradient,
         border: Border.all(
           color: highlighted
               ? AppColors.amber.withValues(alpha: 0.8)
-              : Colors.white.withValues(alpha: 0.06),
+              : (p.isDark ? p.edge : p.outline.withValues(alpha: 0.7)),
           width: highlighted ? 1.4 : 1,
         ),
-        boxShadow: AppShadows.raised(glow),
+        boxShadow: p.raised,
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -107,7 +104,7 @@ class Surface3D extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          glow.withValues(alpha: 0.10),
+                          glow.withValues(alpha: 0.10 * p.glowStrength),
                           glow.withValues(alpha: 0),
                         ],
                       ),
@@ -125,8 +122,8 @@ class Surface3D extends StatelessWidget {
   }
 }
 
-/// Instrument-style icon dial: a dark domed disc with a glowing coloured
-/// ring, like the knobs on a car's dashboard.
+/// Instrument-style icon dial: a domed disc with a glowing coloured ring,
+/// like the knobs on a car's dashboard.
 class GlossyIcon extends StatelessWidget {
   const GlossyIcon(
     this.icon, {
@@ -141,28 +138,25 @@ class GlossyIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const RadialGradient(
-          center: Alignment(-0.35, -0.45),
+        gradient: RadialGradient(
+          center: const Alignment(-0.35, -0.45),
           radius: 0.95,
-          colors: [Color(0xFF3A3A42), Color(0xFF1B1B20)],
+          colors: [p.dialLight, p.dialDark],
         ),
         border: Border.all(color: color, width: size >= 40 ? 2 : 1.6),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.30),
+            color: color.withValues(alpha: 0.30 * p.glowStrength),
             blurRadius: 14,
             spreadRadius: -2,
           ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: p.shadow, blurRadius: 8, offset: const Offset(0, 4)),
         ],
       ),
       child: Icon(icon, color: color, size: size * 0.46),
@@ -190,6 +184,7 @@ class GaugeRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return SizedBox.square(
       dimension: size,
       child: TweenAnimationBuilder<double>(
@@ -197,7 +192,7 @@ class GaugeRing extends StatelessWidget {
         duration: const Duration(milliseconds: 900),
         curve: Curves.easeOutCubic,
         builder: (context, v, _) => CustomPaint(
-          painter: _GaugePainter(v, color, strokeWidth),
+          painter: _GaugePainter(v, color, strokeWidth, p),
           child: Center(child: child),
         ),
       ),
@@ -206,11 +201,12 @@ class GaugeRing extends StatelessWidget {
 }
 
 class _GaugePainter extends CustomPainter {
-  _GaugePainter(this.value, this.color, this.stroke);
+  _GaugePainter(this.value, this.color, this.stroke, this.palette);
 
   final double value;
   final Color color;
   final double stroke;
+  final AppPalette palette;
 
   static const _start = math.pi * 0.75;
   static const _sweep = math.pi * 1.5;
@@ -220,21 +216,30 @@ class _GaugePainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = size.width / 2 - stroke;
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final ink = palette.text;
 
-    // Inner dark dial.
+    // Inner dial face, with a soft drop shadow so it sits proud.
+    final faceRadius = radius - stroke * 1.2;
+    canvas.drawCircle(
+      center + const Offset(0, 3),
+      faceRadius,
+      Paint()
+        ..color = palette.shadow
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
     canvas.drawCircle(
       center,
-      radius - stroke * 1.2,
+      faceRadius,
       Paint()
-        ..shader = const RadialGradient(
-          center: Alignment(-0.3, -0.4),
-          colors: [Color(0xFF34343B), Color(0xFF17171B)],
+        ..shader = RadialGradient(
+          center: const Alignment(-0.3, -0.4),
+          colors: [palette.dialLight, palette.dialDark],
         ).createShader(rect),
     );
 
     // Tick marks.
     final tick = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
+      ..color = ink.withValues(alpha: 0.18)
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
     for (var i = 0; i <= 20; i++) {
@@ -248,16 +253,16 @@ class _GaugePainter extends CustomPainter {
       );
     }
 
-    final base = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
     canvas.drawArc(
       rect,
       _start,
       _sweep,
       false,
-      base..color = Colors.white.withValues(alpha: 0.08),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = ink.withValues(alpha: 0.08),
     );
     if (value <= 0) return;
 
@@ -272,7 +277,7 @@ class _GaugePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke * 1.8
         ..strokeCap = StrokeCap.round
-        ..color = color.withValues(alpha: 0.35)
+        ..color = color.withValues(alpha: 0.35 * palette.glowStrength)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
     canvas.drawArc(
@@ -288,7 +293,6 @@ class _GaugePainter extends CustomPainter {
           startAngle: _start,
           endAngle: _start + _sweep,
           colors: [AppColors.amberDeep, color, AppColors.amberSoft],
-          transform: const GradientRotation(0),
         ).createShader(rect),
     );
     // Needle dot at the arc's end.
@@ -296,17 +300,20 @@ class _GaugePainter extends CustomPainter {
     canvas.drawCircle(
       center + Offset(math.cos(end), math.sin(end)) * radius,
       stroke * 0.42,
-      Paint()..color = Colors.white,
+      Paint()..color = palette.isDark ? Colors.white : AppColors.onAmber,
     );
   }
 
   @override
   bool shouldRepaint(_GaugePainter old) =>
-      old.value != value || old.color != color || old.stroke != stroke;
+      old.value != value ||
+      old.color != color ||
+      old.stroke != stroke ||
+      old.palette != palette;
 }
 
-/// Dark hero panel with an amber glow and decorative dial arcs. Used at the
-/// top of the login screen and home dashboards.
+/// Hero panel with an amber glow and decorative dial arcs. Used at the top
+/// of the login screen and home dashboards.
 class HeroPanel extends StatelessWidget {
   const HeroPanel({
     super.key,
@@ -321,13 +328,14 @@ class HeroPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final r = BorderRadius.circular(radius);
     return Container(
       decoration: BoxDecoration(
         borderRadius: r,
-        gradient: AppColors.panelGradient,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-        boxShadow: AppShadows.raised(AppColors.amber),
+        gradient: p.panelGradient,
+        border: Border.all(color: p.isDark ? p.edge : p.outline),
+        boxShadow: p.raised,
       ),
       child: ClipRRect(
         borderRadius: r,
@@ -343,19 +351,19 @@ class HeroPanel extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.amber.withValues(alpha: 0.22),
+                      AppColors.amber.withValues(alpha: p.isDark ? 0.22 : 0.28),
                       AppColors.amber.withValues(alpha: 0),
                     ],
                   ),
                 ),
               ),
             ),
-            Positioned(
+            const Positioned(
               right: -46,
               top: -46,
               child: _Arc(size: 150, opacity: 0.35),
             ),
-            Positioned(
+            const Positioned(
               right: -20,
               top: -20,
               child: _Arc(size: 98, opacity: 0.18),
@@ -363,7 +371,7 @@ class HeroPanel extends StatelessWidget {
             Padding(
               padding: padding,
               child: DefaultTextStyle.merge(
-                style: const TextStyle(color: AppColors.text),
+                style: TextStyle(color: p.text),
                 child: child,
               ),
             ),
@@ -416,7 +424,10 @@ class Avatar3D extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.35),
           width: 1.2,
         ),
-        boxShadow: AppShadows.glow(AppColors.amber),
+        boxShadow: AppShadows.glow(
+          AppColors.amber,
+          context.palette.glowStrength,
+        ),
       ),
       child: Text(
         initials,
@@ -439,25 +450,26 @@ class GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = context.palette.accentText;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.amber.withValues(alpha: 0.10),
+        color: AppColors.amber.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.amber.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.amber.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.amber),
+          Icon(icon, size: 14, color: accent),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.amberSoft,
+              style: TextStyle(
+                color: accent,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -478,6 +490,7 @@ class MenuTile extends StatelessWidget {
     required this.onTap,
     this.badge = 0,
     this.color = AppColors.amber,
+    this.trailing,
   });
 
   final IconData icon;
@@ -486,8 +499,12 @@ class MenuTile extends StatelessWidget {
   final int badge;
   final Color color;
 
+  /// Replaces the chevron, e.g. with the current value of a setting.
+  final Widget? trailing;
+
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
       child: Surface3D(
@@ -527,7 +544,7 @@ class MenuTile extends StatelessWidget {
                 ),
               ),
             const SizedBox(width: AppSpacing.xs),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            trailing ?? Icon(Icons.chevron_right_rounded, color: p.textMuted),
           ],
         ),
       ),
@@ -556,7 +573,10 @@ class AmberPillButton extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
           gradient: AppColors.brandGradient,
-          boxShadow: AppShadows.glow(AppColors.amber),
+          boxShadow: AppShadows.glow(
+            AppColors.amber,
+            context.palette.glowStrength,
+          ),
         ),
         child: Material(
           type: MaterialType.transparency,

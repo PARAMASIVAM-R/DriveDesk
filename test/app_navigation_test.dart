@@ -79,6 +79,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(navLabel('More'));
     await tester.pumpAndSettle();
+    // Built below the fold (cache extent), so scroll it into view first.
+    await tester.ensureVisible(find.text('Sign out'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Simulated sign-in'), findsOneWidget);
@@ -92,5 +95,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.textContaining('Outstanding'), findsWidgets);
+  });
+
+  testWidgets('appearance switch changes between dark and light', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    Brightness brightness() =>
+        Theme.of(tester.element(find.byType(Scaffold).first)).brightness;
+    expect(brightness(), Brightness.dark); // Brand default.
+
+    await tester.tap(find.text('Office staff'));
+    await tester.pumpAndSettle();
+    await tester.tap(navLabel('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Light'));
+    await tester.pumpAndSettle();
+    expect(brightness(), Brightness.light);
+    expect(tester.takeException(), isNull);
   });
 }

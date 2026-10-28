@@ -57,7 +57,7 @@ class StudentHomeScreen extends ConsumerWidget {
                   ),
                   Text(
                     schoolName,
-                    style: const TextStyle(color: AppColors.textMuted),
+                    style: TextStyle(color: context.palette.textMuted),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _ProgressRing(completed: completed),
@@ -209,27 +209,30 @@ class _ProgressRing extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const Text(
+              Text(
                 'of $_target',
-                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: context.palette.textMuted,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(width: AppSpacing.lg),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Classes completed',
                 style: TextStyle(
-                  color: AppColors.amber,
+                  color: context.palette.accentText,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: AppSpacing.xs),
-              Text(
+              const SizedBox(height: AppSpacing.xs),
+              const Text(
                 'Keep going — every lesson counts.',
                 style: TextStyle(height: 1.35),
               ),

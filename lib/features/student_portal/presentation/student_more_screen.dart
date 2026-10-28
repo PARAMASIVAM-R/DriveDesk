@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../app/theme/theme_mode_selector.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../auth/presentation/session_provider.dart';
 import '../../reminders/presentation/reminder_providers.dart';
@@ -39,9 +40,9 @@ class StudentMoreScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      const Text(
+                      Text(
                         'Student · demo account',
-                        style: TextStyle(color: AppColors.textMuted),
+                        style: TextStyle(color: context.palette.textMuted),
                       ),
                     ],
                   ),
@@ -49,6 +50,8 @@ class StudentMoreScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SectionHeader('Appearance'),
+          const ThemeModeSelector(),
           const SectionHeader('My account'),
           MenuTile(
             icon: Icons.notifications_rounded,

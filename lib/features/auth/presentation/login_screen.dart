@@ -63,7 +63,7 @@ class LoginScreen extends ConsumerWidget {
                 Text(
                   'Driving school manager',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textMuted,
+                    color: context.palette.textMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),

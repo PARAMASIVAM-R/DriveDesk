@@ -61,6 +61,7 @@ class _DashboardBody extends ConsumerWidget {
     final fees = ref.watch(schoolFeeTotalsProvider);
     final attention = ref.watch(attentionItemsProvider);
     final now = ref.watch(clockProvider)();
+    final palette = context.palette;
     final doneToday = today
         .where((l) => l.status == LessonStatus.completed)
         .length;
@@ -84,7 +85,7 @@ class _DashboardBody extends ConsumerWidget {
                         ),
                         Text(
                           schoolName,
-                          style: const TextStyle(color: AppColors.textMuted),
+                          style: TextStyle(color: palette.textMuted),
                         ),
                       ],
                     ),
@@ -119,11 +120,11 @@ class _DashboardBody extends ConsumerWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const Text(
+                        Text(
                           'classes',
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.textMuted,
+                            color: palette.textMuted,
                           ),
                         ),
                       ],
@@ -136,8 +137,8 @@ class _DashboardBody extends ConsumerWidget {
                       children: [
                         Text(
                           formatDate(now),
-                          style: const TextStyle(
-                            color: AppColors.amber,
+                          style: TextStyle(
+                            color: palette.accentText,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),

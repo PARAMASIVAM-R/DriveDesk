@@ -41,8 +41,8 @@ class ShellScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
+    final palette = context.palette;
+    final dark = palette.isDark;
     final radius = BorderRadius.circular(AppRadius.xl);
     return Scaffold(
       body: shell,
@@ -57,12 +57,12 @@ class ShellScaffold extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: radius,
-            color: theme.colorScheme.surfaceContainerLowest,
+            color: palette.surface,
             border: Border.all(
-              color: dark ? Colors.white.withValues(alpha: 0.07) : Colors.white,
+              color: dark ? palette.edge : palette.outline,
               width: 1.2,
             ),
-            boxShadow: AppShadows.raised(AppColors.brandDeep, dark: dark),
+            boxShadow: palette.raised,
           ),
           child: ClipRRect(
             borderRadius: radius,

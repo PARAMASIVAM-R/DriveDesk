@@ -19,8 +19,8 @@ abstract final class AppRadius {
   static const double xl = 28;
 }
 
-/// Charcoal-and-amber palette. Accent colours stay in the amber family so
-/// the app reads as one instrument panel; red/green are kept for meaning.
+/// Brand accent and semantic colours, shared by both themes. Surface and
+/// text colours differ per theme; read those from [AppPalette].
 abstract final class AppColors {
   static const Color amber = Color(0xFFFFB224);
   static const Color amberDeep = Color(0xFFF08C00);
@@ -31,21 +31,15 @@ abstract final class AppColors {
   static const Color seed = amber;
   static const Color brand = amber;
   static const Color brandDeep = amberDeep;
-  static const Color violet = amberSoft;
+  static const Color violet = Color(0xFFF5A524);
   static const Color teal = Color(0xFFFF8A3D);
 
-  static const Color success = Color(0xFF34D399);
-  static const Color warning = Color(0xFFFBBF24);
-  static const Color danger = Color(0xFFF87171);
-  static const Color info = Color(0xFF7DD3FC);
-  static const Color neutral = Color(0xFFA1A1AA);
-
-  static const Color background = Color(0xFF151518);
-  static const Color surface = Color(0xFF212126);
-  static const Color surfaceHigh = Color(0xFF2A2A30);
-  static const Color outline = Color(0xFF34343C);
-  static const Color text = Color(0xFFF4F4F5);
-  static const Color textMuted = Color(0xFFA1A1AA);
+  // Mid-tones that stay legible on both charcoal and white.
+  static const Color success = Color(0xFF22A55A);
+  static const Color warning = Color(0xFFE08A00);
+  static const Color danger = Color(0xFFE5484D);
+  static const Color info = Color(0xFF2E90D9);
+  static const Color neutral = Color(0xFF8A8A93);
 
   /// Amber gradient for primary orbs, avatars and key accents.
   static const LinearGradient brandGradient = LinearGradient(
@@ -53,34 +47,129 @@ abstract final class AppColors {
     end: Alignment.bottomRight,
     colors: [Color(0xFFFFCB5C), amber, amberDeep],
   );
-
-  /// Dark panel gradient used by hero panels.
-  static const LinearGradient panelGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF2E2E35), Color(0xFF1C1C21)],
-  );
 }
 
-/// Layered shadows that give surfaces a raised, physical feel.
-abstract final class AppShadows {
-  static List<BoxShadow> raised(Color tint, {bool dark = true}) => [
+/// Theme-dependent surface, text and depth colours.
+@immutable
+class AppPalette extends ThemeExtension<AppPalette> {
+  const AppPalette({
+    required this.background,
+    required this.surface,
+    required this.surfaceHigh,
+    required this.outline,
+    required this.text,
+    required this.textMuted,
+    required this.accentText,
+    required this.dialLight,
+    required this.dialDark,
+    required this.edge,
+    required this.shadow,
+    required this.glowStrength,
+  });
+
+  /// Charcoal instrument panel.
+  static const dark = AppPalette(
+    background: Color(0xFF151518),
+    surface: Color(0xFF212126),
+    surfaceHigh: Color(0xFF2A2A30),
+    outline: Color(0xFF34343C),
+    text: Color(0xFFF4F4F5),
+    textMuted: Color(0xFFA1A1AA),
+    accentText: AppColors.amber,
+    dialLight: Color(0xFF3A3A42),
+    dialDark: Color(0xFF1B1B20),
+    edge: Color(0x12FFFFFF),
+    shadow: Color(0x8C000000),
+    glowStrength: 1,
+  );
+
+  /// Warm off-white panel with the same amber accents.
+  static const light = AppPalette(
+    background: Color(0xFFF4F2EE),
+    surface: Color(0xFFFFFFFF),
+    surfaceHigh: Color(0xFFFBF8F3),
+    outline: Color(0xFFE6E1D8),
+    text: Color(0xFF1C1B1F),
+    textMuted: Color(0xFF6B6872),
+    accentText: Color(0xFFB45F00),
+    dialLight: Color(0xFFFFFFFF),
+    dialDark: Color(0xFFEDE8DF),
+    edge: Color(0xFFFFFFFF),
+    shadow: Color(0x2E5A4630),
+    glowStrength: 0.7,
+  );
+
+  final Color background;
+  final Color surface;
+  final Color surfaceHigh;
+  final Color outline;
+  final Color text;
+  final Color textMuted;
+
+  /// Amber tuned for text contrast on [surface].
+  final Color accentText;
+
+  /// Highlight and base of the domed icon dials and gauge faces.
+  final Color dialLight;
+  final Color dialDark;
+
+  /// Lit top edge of raised surfaces.
+  final Color edge;
+
+  /// Ambient shadow under raised surfaces.
+  final Color shadow;
+
+  /// Multiplier for coloured glows (softer on light backgrounds).
+  final double glowStrength;
+
+  bool get isDark => background.computeLuminance() < 0.2;
+
+  LinearGradient get surfaceGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [surfaceHigh, surface],
+  );
+
+  LinearGradient get panelGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: isDark
+        ? const [Color(0xFF2E2E35), Color(0xFF1C1C21)]
+        : const [Color(0xFFFFFFFF), Color(0xFFFAF4EA)],
+  );
+
+  /// Layered shadow for raised cards.
+  List<BoxShadow> get raised => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.55),
+      color: shadow,
       blurRadius: 26,
       spreadRadius: -6,
       offset: const Offset(0, 16),
     ),
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.35),
+      color: shadow.withValues(alpha: shadow.a * 0.6),
       blurRadius: 6,
       offset: const Offset(0, 2),
     ),
   ];
 
-  static List<BoxShadow> glow(Color color) => [
+  @override
+  AppPalette copyWith() => this;
+
+  @override
+  AppPalette lerp(AppPalette? other, double t) =>
+      other == null || t < 0.5 ? this : other;
+}
+
+extension AppPaletteX on BuildContext {
+  AppPalette get palette =>
+      Theme.of(this).extension<AppPalette>() ?? AppPalette.dark;
+}
+
+abstract final class AppShadows {
+  static List<BoxShadow> glow(Color color, [double strength = 1]) => [
     BoxShadow(
-      color: color.withValues(alpha: 0.35),
+      color: color.withValues(alpha: 0.35 * strength),
       blurRadius: 18,
       spreadRadius: -4,
       offset: const Offset(0, 6),
@@ -89,32 +178,35 @@ abstract final class AppShadows {
 }
 
 abstract final class AppTheme {
-  static ThemeData dark() {
+  static ThemeData dark() => _build(AppPalette.dark, Brightness.dark);
+  static ThemeData light() => _build(AppPalette.light, Brightness.light);
+
+  static ThemeData _build(AppPalette p, Brightness brightness) {
     final scheme =
         ColorScheme.fromSeed(
           seedColor: AppColors.amber,
-          brightness: Brightness.dark,
+          brightness: brightness,
         ).copyWith(
           primary: AppColors.amber,
           onPrimary: AppColors.onAmber,
           primaryContainer: AppColors.amber.withValues(alpha: 0.18),
-          onPrimaryContainer: AppColors.amberSoft,
-          secondary: AppColors.amberSoft,
+          onPrimaryContainer: p.accentText,
+          secondary: p.accentText,
           onSecondary: AppColors.onAmber,
-          secondaryContainer: AppColors.surfaceHigh,
-          onSecondaryContainer: AppColors.text,
-          tertiaryContainer: AppColors.surfaceHigh,
-          onTertiaryContainer: AppColors.text,
-          surface: AppColors.background,
-          onSurface: AppColors.text,
-          onSurfaceVariant: AppColors.textMuted,
-          surfaceContainerLowest: AppColors.surface,
-          surfaceContainerLow: AppColors.surface,
-          surfaceContainer: AppColors.surfaceHigh,
-          surfaceContainerHigh: AppColors.surfaceHigh,
-          surfaceContainerHighest: const Color(0xFF34343B),
-          outline: const Color(0xFF55555E),
-          outlineVariant: AppColors.outline,
+          secondaryContainer: p.surfaceHigh,
+          onSecondaryContainer: p.text,
+          tertiaryContainer: p.surfaceHigh,
+          onTertiaryContainer: p.text,
+          surface: p.background,
+          onSurface: p.text,
+          onSurfaceVariant: p.textMuted,
+          surfaceContainerLowest: p.surface,
+          surfaceContainerLow: p.surface,
+          surfaceContainer: p.surfaceHigh,
+          surfaceContainerHigh: p.surfaceHigh,
+          surfaceContainerHighest: p.outline,
+          outline: p.textMuted.withValues(alpha: 0.6),
+          outlineVariant: p.outline,
           error: AppColors.danger,
         );
     final pill = RoundedRectangleBorder(
@@ -123,10 +215,11 @@ abstract final class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.background,
-      canvasColor: AppColors.background,
+      extensions: [p],
+      scaffoldBackgroundColor: p.background,
+      canvasColor: p.background,
       visualDensity: VisualDensity.standard,
       // Merged over the platform defaults by ThemeData.
       textTheme: const TextTheme(
@@ -140,47 +233,47 @@ abstract final class AppTheme {
         ),
         titleLarge: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.2),
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         centerTitle: true,
-        backgroundColor: AppColors.background,
+        backgroundColor: p.background,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: AppColors.text,
+        foregroundColor: p.text,
         scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          color: AppColors.text,
+          color: p.text,
           letterSpacing: -0.2,
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 8,
+        elevation: p.isDark ? 8 : 4,
         margin: EdgeInsets.zero,
-        color: AppColors.surface,
+        color: p.surface,
         surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.black.withValues(alpha: 0.7),
+        shadowColor: p.shadow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+          side: BorderSide(color: p.isDark ? p.edge : p.outline),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: p.surface,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: 14,
         ),
-        labelStyle: const TextStyle(color: AppColors.textMuted),
-        floatingLabelStyle: const TextStyle(color: AppColors.amber),
+        labelStyle: TextStyle(color: p.textMuted),
+        floatingLabelStyle: TextStyle(color: p.accentText),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.outline),
+          borderSide: BorderSide(color: p.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.outline),
+          borderSide: BorderSide(color: p.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -192,7 +285,7 @@ abstract final class AppTheme {
           minimumSize: const Size(64, 52),
           backgroundColor: AppColors.amber,
           foregroundColor: AppColors.onAmber,
-          disabledBackgroundColor: AppColors.surfaceHigh,
+          disabledBackgroundColor: p.surfaceHigh,
           elevation: 6,
           shadowColor: AppColors.amber.withValues(alpha: 0.5),
           textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
@@ -202,7 +295,7 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(64, 52),
-          foregroundColor: AppColors.amber,
+          foregroundColor: p.accentText,
           side: const BorderSide(color: AppColors.amber, width: 1.4),
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
           shape: pill,
@@ -210,7 +303,7 @@ abstract final class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.amber,
+          foregroundColor: p.accentText,
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
@@ -223,25 +316,22 @@ abstract final class AppTheme {
         shape: pill,
       ),
       iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(foregroundColor: AppColors.text),
+        style: IconButton.styleFrom(foregroundColor: p.text),
       ),
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        iconColor: AppColors.textMuted,
-        subtitleTextStyle: const TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 13,
-        ),
+        iconColor: p.textMuted,
+        subtitleTextStyle: TextStyle(color: p.textMuted, fontSize: 13),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
       chipTheme: ChipThemeData(
-        side: const BorderSide(color: AppColors.outline),
-        backgroundColor: AppColors.surface,
+        side: BorderSide(color: p.outline),
+        backgroundColor: p.surface,
         selectedColor: AppColors.amber.withValues(alpha: 0.2),
-        checkmarkColor: AppColors.amber,
-        labelStyle: const TextStyle(color: AppColors.text),
+        checkmarkColor: p.accentText,
+        labelStyle: TextStyle(color: p.text),
         shape: pill,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       ),
@@ -250,7 +340,7 @@ abstract final class AppTheme {
         elevation: 0,
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.amber.withValues(alpha: 0.16),
+        indicatorColor: AppColors.amber.withValues(alpha: 0.18),
         indicatorShape: pill,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
@@ -259,23 +349,23 @@ abstract final class AppTheme {
                 ? FontWeight.w700
                 : FontWeight.w500,
             color: states.contains(WidgetState.selected)
-                ? AppColors.amber
-                : AppColors.textMuted,
+                ? p.accentText
+                : p.textMuted,
           ),
         ),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? AppColors.amber
-                : AppColors.textMuted,
+                ? p.accentText
+                : p.textMuted,
           ),
         ),
       ),
-      tabBarTheme: const TabBarThemeData(
-        labelColor: AppColors.amber,
-        unselectedLabelColor: AppColors.textMuted,
+      tabBarTheme: TabBarThemeData(
+        labelColor: p.accentText,
+        unselectedLabelColor: p.textMuted,
         indicatorColor: AppColors.amber,
-        dividerColor: AppColors.outline,
+        dividerColor: p.outline,
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.amber,
@@ -284,46 +374,44 @@ abstract final class AppTheme {
         thumbColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected)
               ? AppColors.onAmber
-              : AppColors.textMuted,
+              : p.textMuted,
         ),
         trackColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected)
               ? AppColors.amber
-              : AppColors.surfaceHigh,
+              : p.surfaceHigh,
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surface,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
-        dragHandleColor: AppColors.outline,
-        shape: RoundedRectangleBorder(
+        dragHandleColor: p.outline,
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
       ),
-      datePickerTheme: const DatePickerThemeData(
-        backgroundColor: AppColors.surface,
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
       ),
-      timePickerTheme: const TimePickerThemeData(
-        backgroundColor: AppColors.surface,
-      ),
-      popupMenuTheme: const PopupMenuThemeData(
-        color: AppColors.surfaceHigh,
+      timePickerTheme: TimePickerThemeData(backgroundColor: p.surface),
+      popupMenuTheme: PopupMenuThemeData(
+        color: p.surfaceHigh,
         surfaceTintColor: Colors.transparent,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.surfaceHigh,
-        contentTextStyle: const TextStyle(color: AppColors.text),
+        backgroundColor: p.isDark ? p.surfaceHigh : const Color(0xFF2A2A30),
+        contentTextStyle: const TextStyle(color: Color(0xFFF4F4F5)),
         actionTextColor: AppColors.amber,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -331,15 +419,15 @@ abstract final class AppTheme {
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textMuted,
+          backgroundColor: p.surface,
+          foregroundColor: p.textMuted,
           selectedBackgroundColor: AppColors.amber,
           selectedForegroundColor: AppColors.onAmber,
-          side: const BorderSide(color: AppColors.outline),
+          side: BorderSide(color: p.outline),
           shape: pill,
         ),
       ),
-      dividerTheme: const DividerThemeData(color: AppColors.outline, space: 1),
+      dividerTheme: DividerThemeData(color: p.outline, space: 1),
     );
   }
 }

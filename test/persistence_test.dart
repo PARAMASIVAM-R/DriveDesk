@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drive_desk/app/theme/theme_mode_provider.dart';
 import 'package:drive_desk/features/auth/domain/session.dart';
 import 'package:drive_desk/features/auth/presentation/session_provider.dart';
 import 'package:drive_desk/features/fees/domain/fees.dart';
@@ -12,6 +13,7 @@ import 'package:drive_desk/features/students/presentation/student_providers.dart
 import 'package:drive_desk/shared/data/local_store.dart';
 import 'package:drive_desk/shared/data/mock_database.dart';
 import 'package:drive_desk/shared/providers/core_providers.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -195,5 +197,18 @@ void main() {
     expect(restored.students, contains('stu_013'));
     expect(restored.payments, contains('pay_014'));
     expect(restored.students['stu_001']!.notes, 'Edited by user');
+  });
+
+  test('theme mode is saved and restored', () async {
+    final store = InMemoryLocalStore();
+    final c = ProviderContainer(
+      overrides: [themeStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(c.dispose);
+    expect(c.read(themeModeProvider), ThemeMode.dark);
+    c.read(themeModeProvider.notifier).set(ThemeMode.light);
+    await Future<void>.delayed(Duration.zero);
+    expect(await loadStoredThemeMode(store), ThemeMode.light);
+    expect(await loadStoredThemeMode(InMemoryLocalStore()), ThemeMode.dark);
   });
 }

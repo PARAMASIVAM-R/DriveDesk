@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'app/theme/theme_mode_provider.dart';
 import 'features/auth/presentation/session_provider.dart';
 import 'shared/data/local_store.dart';
 import 'shared/data/mock_database.dart';
@@ -12,6 +13,7 @@ Future<void> main() async {
 
   final dataStore = FileLocalStore('drivedesk_data.json');
   final sessionStore = FileLocalStore('drivedesk_session.json');
+  final themeStore = FileLocalStore('drivedesk_theme.txt');
 
   // A missing, corrupted or outdated snapshot falls back to seed data.
   MockDatabase? restored;
@@ -28,6 +30,7 @@ Future<void> main() async {
     await dataStore.write(db.encode());
   }
   final session = await loadStoredSession(sessionStore);
+  final themeMode = await loadStoredThemeMode(themeStore);
 
   runApp(
     ProviderScope(
@@ -36,6 +39,8 @@ Future<void> main() async {
         sessionStoreProvider.overrideWithValue(sessionStore),
         mockDatabaseProvider.overrideWithValue(db),
         initialSessionProvider.overrideWithValue(session),
+        themeStoreProvider.overrideWithValue(themeStore),
+        initialThemeModeProvider.overrideWithValue(themeMode),
       ],
       child: const _PersistenceScope(child: DriveDeskApp()),
     ),

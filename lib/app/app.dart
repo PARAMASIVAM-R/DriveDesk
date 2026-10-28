@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_mode_provider.dart';
 
 class DriveDeskApp extends ConsumerWidget {
   const DriveDeskApp({super.key});
@@ -12,8 +13,9 @@ class DriveDeskApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'DriveDesk',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      theme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       routerConfig: ref.watch(routerProvider),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../app/theme/theme_mode_selector.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../auth/domain/session.dart';
 import '../../auth/presentation/session_provider.dart';
@@ -48,7 +49,7 @@ class StaffMoreScreen extends ConsumerWidget {
                       ),
                       Text(
                         '${session?.role.label ?? ''} · demo account',
-                        style: const TextStyle(color: AppColors.textMuted),
+                        style: TextStyle(color: context.palette.textMuted),
                       ),
                     ],
                   ),
@@ -84,6 +85,8 @@ class StaffMoreScreen extends ConsumerWidget {
             title: 'School settings',
             onTap: () => context.push('/settings'),
           ),
+          const SectionHeader('Appearance'),
+          const ThemeModeSelector(),
           const SectionHeader('Account'),
           if (isOwner)
             MenuTile(

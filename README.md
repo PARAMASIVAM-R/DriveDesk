@@ -4,7 +4,7 @@ Android-first Flutter app for small driving schools: student enrolment, class sc
 
 > **Offline MVP.** No backend, no real authentication, no real WhatsApp delivery. Data starts as fictional sample records and every change is saved on the device, so it survives restarts. The owner can restore the sample data from *More → Reset demo data*.
 
-Dark charcoal-and-amber "instrument panel" design: raised 3D cards, ring-style icon dials, speedometer gauges and amber pill actions.
+Charcoal-and-amber "instrument panel" design with raised 3D cards, ring-style icon dials, speedometer gauges and amber pill actions. Comes in **dark** (default) and **light** themes; switch under *More → Appearance* (System / Light / Dark). The choice is saved on the device.
 
 ## Run it
 
