@@ -21,6 +21,12 @@ Future<void> main() async {
     restored = null;
   }
   final db = restored ?? MockDatabase.seeded(DateTime.now());
+  // Bring older snapshots up to date with newly added sample records,
+  // without touching anything the user changed.
+  if (db.seedVersion < MockDatabase.currentSeedVersion) {
+    db.addMissingSeedData(MockDatabase.seeded(DateTime.now()));
+    await dataStore.write(db.encode());
+  }
   final session = await loadStoredSession(sessionStore);
 
   runApp(

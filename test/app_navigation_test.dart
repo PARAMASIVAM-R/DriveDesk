@@ -83,4 +83,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Simulated sign-in'), findsOneWidget);
   });
+
+  testWidgets('staff fees tab renders sample fee accounts', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Office staff'));
+    await tester.pumpAndSettle();
+    await tester.tap(navLabel('Fees'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Outstanding'), findsWidgets);
+  });
 }

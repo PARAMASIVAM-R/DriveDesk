@@ -173,4 +173,27 @@ void main() {
     expect(sessionStore.data, isNull);
     expect(await loadStoredSession(sessionStore), isNull);
   });
+
+  test('old snapshots gain new sample records but keep user edits', () {
+    final now = DateTime(2026, 10, 28, 9);
+    // Simulate a seed-1 snapshot: no new students, one user edit.
+    final old = MockDatabase.seeded(now)
+      ..students.remove('stu_013')
+      ..payments.remove('pay_014')
+      ..seedVersion = 1;
+    old.students['stu_001'] = old.students['stu_001']!.copyWith(
+      notes: 'Edited by user',
+    );
+    final json = jsonDecode(old.encode()) as Map<String, Object?>;
+    json.remove('seedVersion'); // Written before versioning existed.
+    final restored = MockDatabase.fromJson(json);
+    expect(restored.seedVersion, 1);
+
+    final added = restored.addMissingSeedData(MockDatabase.seeded(now));
+    expect(added, isTrue);
+    expect(restored.seedVersion, MockDatabase.currentSeedVersion);
+    expect(restored.students, contains('stu_013'));
+    expect(restored.payments, contains('pay_014'));
+    expect(restored.students['stu_001']!.notes, 'Edited by user');
+  });
 }

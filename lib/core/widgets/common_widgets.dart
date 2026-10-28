@@ -90,27 +90,36 @@ class StatTile extends StatelessWidget {
       onTap: onTap,
       tint: tint,
       padding: const EdgeInsets.all(AppSpacing.md),
+      // Works both in a fixed-height grid cell (figures pinned to the
+      // bottom) and in an unbounded row (shrink-wraps).
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GlossyIcon(icon, color: tint, size: 38),
-          const Spacer(),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: theme.textTheme.headlineSmall,
-              maxLines: 1,
-            ),
-          ),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: theme.textTheme.headlineSmall,
+                  maxLines: 1,
+                ),
+              ),
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ],
       ),

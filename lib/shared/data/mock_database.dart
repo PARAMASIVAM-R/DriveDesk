@@ -19,6 +19,14 @@ class MockDatabase {
   /// shape changes incompatibly; older snapshots are then discarded.
   static const schemaVersion = 1;
 
+  /// Version of the sample dataset built by [MockDatabase.seeded]. Bump when
+  /// sample records are added; saved snapshots from an older seed get the
+  /// missing records merged in (see [addMissingSeedData]).
+  static const currentSeedVersion = 2;
+
+  /// Seed version this data was created from or last merged with.
+  int seedVersion = currentSeedVersion;
+
   School school;
   final Map<String, StaffMember> staff = {};
   final Map<String, Vehicle> vehicles = {};
@@ -65,6 +73,36 @@ class MockDatabase {
     copy(payments, other.payments);
     copy(installments, other.installments);
     copy(reminderStatuses, other.reminderStatuses);
+    seedVersion = other.seedVersion;
+  }
+
+  /// Adds every record from [seed] whose ID is not already present, keeping
+  /// all existing records (including the user's edits) untouched. Returns
+  /// whether anything was added.
+  bool addMissingSeedData(MockDatabase seed) {
+    var added = false;
+    void merge<T>(Map<String, T> into, Map<String, T> from) {
+      for (final e in from.entries) {
+        if (!into.containsKey(e.key)) {
+          into[e.key] = e.value;
+          added = true;
+        }
+      }
+    }
+
+    merge(staff, seed.staff);
+    merge(vehicles, seed.vehicles);
+    merge(packages, seed.packages);
+    merge(students, seed.students);
+    merge(lessons, seed.lessons);
+    merge(rescheduleRequests, seed.rescheduleRequests);
+    merge(licences, seed.licences);
+    merge(tests, seed.tests);
+    merge(payments, seed.payments);
+    merge(installments, seed.installments);
+    merge(reminderStatuses, seed.reminderStatuses);
+    seedVersion = seed.seedVersion;
+    return added;
   }
 
   Map<String, Object?> toJson() {
@@ -75,6 +113,7 @@ class MockDatabase {
 
     return {
       'version': schemaVersion,
+      'seedVersion': seedVersion,
       'school': school.toJson(),
       'staff': list(staff, (e) => e.toJson()),
       'vehicles': list(vehicles, (e) => e.toJson()),
@@ -103,6 +142,8 @@ class MockDatabase {
     final db = MockDatabase._(
       School.fromJson((json['school'] as Map).cast<String, Object?>()),
     );
+    // Snapshots written before seed versioning existed are from seed 1.
+    db.seedVersion = json['seedVersion'] as int? ?? 1;
     void load<T>(
       String key,
       Map<String, T> into,
@@ -261,6 +302,13 @@ class MockDatabase {
         fee: 2500,
         lessonCount: 5,
       ),
+      CoursePackage(
+        id: 'pkg_auto',
+        schoolId: sid,
+        name: 'Car — Automatic (18 lessons)',
+        fee: 7500,
+        lessonCount: 18,
+      ),
     ]) {
       db.packages[p.id] = p;
     }
@@ -407,6 +455,87 @@ class MockDatabase {
       address: 'Saibaba Colony, Coimbatore',
     );
 
+    // Students added for a fuller fees picture: monthly plans, partial and
+    // overdue installments, discounts, multiple payment methods.
+    student(
+      'stu_013',
+      'Ananya Suresh',
+      '9840011013',
+      'pkg_full',
+      9000,
+      StudentStatus.active,
+      60,
+      notes: 'Monthly plan: ₹3,000 × 3.',
+      address: 'Gandhipuram, Coimbatore',
+    );
+    student(
+      'stu_014',
+      'Balaji Murugan',
+      '9840011014',
+      'pkg_basic',
+      6500,
+      StudentStatus.active,
+      50,
+    );
+    student(
+      'stu_015',
+      'Kavya Rajan',
+      '9840011015',
+      'pkg_auto',
+      7500,
+      StudentStatus.active,
+      12,
+      notes: 'Paid in full upfront.',
+    );
+    student(
+      'stu_016',
+      'Suresh Kumar',
+      '9840011016',
+      'pkg_full',
+      9000,
+      StudentStatus.completed,
+      150,
+    );
+    student(
+      'stu_017',
+      'Nisha Thomas',
+      '9840011017',
+      'pkg_2w',
+      3500,
+      StudentStatus.active,
+      8,
+    );
+    student(
+      'stu_018',
+      'Harish Chandran',
+      '9840011018',
+      'pkg_refresher',
+      2500,
+      StudentStatus.active,
+      40,
+      notes: 'Promised to pay after salary credit.',
+    );
+    student(
+      'stu_019',
+      'Revathi Senthil',
+      '9840011019',
+      'pkg_basic',
+      6000,
+      StudentStatus.active,
+      3,
+      notes: 'Agreed ₹500 sibling discount.',
+    );
+    student(
+      'stu_020',
+      'Aravind Kannan',
+      '9840011020',
+      'pkg_auto',
+      7500,
+      StudentStatus.onHold,
+      90,
+      notes: 'Paused for exams; resumes next month.',
+    );
+
     var lessonNo = 0;
     void lesson(
       String stu,
@@ -512,6 +641,14 @@ class MockDatabase {
     llr('llr_010', 'stu_010', 'TN38/LLR/2026/01110', -20, 160);
     llr('llr_011', 'stu_011', 'TN38/LLR/2026/01111', -90, 90);
     llr('llr_012', 'stu_012', 'TN38/LLR/2026/01112', -120, 60);
+    llr('llr_013', 'stu_013', 'TN38/LLR/2026/01113', -70, 110);
+    llr('llr_014', 'stu_014', 'TN38/LLR/2026/01114', -55, 125);
+    llr('llr_015', 'stu_015', 'TN38/LLR/2026/01115', -15, 165);
+    llr('llr_016', 'stu_016', 'TN38/LLR/2026/00916', -160, 20);
+    llr('llr_017', 'stu_017', 'TN38/LLR/2026/01117', -10, 170);
+    llr('llr_018', 'stu_018', 'TN38/LLR/2026/01118', -45, 135);
+    llr('llr_019', 'stu_019', 'TN38/LLR/2026/01119', -5, 175);
+    llr('llr_020', 'stu_020', 'TN38/LLR/2026/01020', -95, 85);
 
     void test(
       String id,
@@ -599,6 +736,25 @@ class MockDatabase {
     pay('stu_011', 2000, -25, PaymentMethod.upi, ref: 'UPI-33002211');
     pay('stu_012', 6500, -20, PaymentMethod.card);
 
+    pay('stu_013', 3000, -60, PaymentMethod.cash);
+    pay('stu_013', 3000, -29, PaymentMethod.upi, ref: 'UPI-61200457');
+    pay('stu_014', 2500, -50, PaymentMethod.card);
+    pay('stu_014', 1000, -18, PaymentMethod.cash);
+    pay('stu_015', 7500, -12, PaymentMethod.bankTransfer, ref: 'NEFT-902211');
+    pay('stu_016', 4500, -150, PaymentMethod.cash);
+    pay('stu_016', 4000, -118, PaymentMethod.upi, ref: 'UPI-21007788');
+    pay('stu_016', 500, -90, PaymentMethod.cash);
+    pay('stu_017', 1500, -8, PaymentMethod.upi, ref: 'UPI-70045512');
+    pay('stu_019', 2000, -3, PaymentMethod.cash);
+    pay('stu_020', 3750, -88, PaymentMethod.card);
+    pay(
+      'stu_020',
+      3750,
+      -86,
+      PaymentMethod.card,
+      voidReason: 'Card charged twice; second charge reversed by bank.',
+    );
+
     var instNo = 0;
     void inst(String stu, double amount, int offset) {
       instNo++;
@@ -624,6 +780,32 @@ class MockDatabase {
     inst('stu_010', 1000, 10);
     inst('stu_011', 2000, -25);
     inst('stu_011', 1500, 6);
+
+    // Plans for students who paid without one, so every account has a
+    // schedule to show.
+    inst('stu_003', 9000, -10);
+    inst('stu_005', 2000, -30);
+    inst('stu_005', 1500, -15);
+    inst('stu_006', 9000, -120);
+    inst('stu_012', 6500, -20);
+
+    inst('stu_013', 3000, -60);
+    inst('stu_013', 3000, -30);
+    inst('stu_013', 3000, 0);
+    inst('stu_014', 2500, -50);
+    inst('stu_014', 2000, -20);
+    inst('stu_014', 2000, 10);
+    inst('stu_015', 7500, -12);
+    inst('stu_016', 4500, -150);
+    inst('stu_016', 4500, -120);
+    inst('stu_017', 1500, -8);
+    inst('stu_017', 2000, 22);
+    inst('stu_018', 2500, -35);
+    inst('stu_019', 2000, -3);
+    inst('stu_019', 2000, 27);
+    inst('stu_019', 2000, 57);
+    inst('stu_020', 3750, -90);
+    inst('stu_020', 3750, -45);
 
     db.reminderStatuses['inst-ins_004'] = ReminderStatus.markedSent;
     return db;

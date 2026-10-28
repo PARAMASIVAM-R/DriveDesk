@@ -241,4 +241,18 @@ void main() {
     await c.read(staffProvider.future);
     expect(c.read(instructorNameProvider(instructor.id)), 'Renamed Instructor');
   });
+
+  test('sample fees cover paid, partial, overdue and credit cases', () async {
+    final c = makeContainer();
+    await loadAll(c);
+    final fees = c.read(feeSummariesProvider);
+    expect(fees['stu_015']!.balance, 0); // Paid upfront.
+    expect(fees['stu_016']!.balance, 0); // Paid over three payments.
+    expect(fees['stu_013']!.balance, 3000); // Third installment due today.
+    expect(fees['stu_014']!.hasOverdue, isTrue); // Second installment short.
+    expect(fees['stu_014']!.overdueAmount, 1000);
+    expect(fees['stu_018']!.overdueAmount, 2500); // Nothing paid.
+    expect(fees['stu_020']!.balance, 3750); // Voided duplicate excluded.
+    expect(fees['stu_019']!.agreedFee, 6000); // Discounted fee.
+  });
 }
